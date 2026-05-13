@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Source Sans Pro", ui-sans-serif, system-ui, sans-serif;
+  --color-primary: #007bff;
+  --color-secondary: #6c757d;
+  --color-success: #28a745;
+  --color-info: #17a2b8;
+  --color-warning: #ffc107;
+  --color-danger: #dc3545;
+  --color-dark: #343a40;
+}
+
+@layer base {
+  .btn-primary {
+    @apply bg-[#007bff] text-white hover:bg-[#0069d9] transition-colors border border-transparent;
+  }
+  .btn-success {
+    @apply bg-[#28a745] text-white hover:bg-[#218838] transition-colors border border-transparent;
+  }
+  .btn-danger {
+    @apply bg-[#dc3545] text-white hover:bg-[#c82333] transition-colors border border-transparent;
+  }
+  .btn-info {
+    @apply bg-[#17a2b8] text-white hover:bg-[#138496] transition-colors border border-transparent;
+  }
+}
+
+body {
+  @apply font-sans antialiased bg-[#f4f6f9] text-[#212529];
+}

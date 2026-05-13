@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "Item": {
+      "title": "Stock Item",
+      "description": "An item in the inventory",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the item" },
+        "sku": { "type": "string", "description": "Stock Keeping Unit / Barcode" },
+        "category": { "type": "string", "description": "Category of the item" },
+        "price": { "type": "number", "description": "Unit price" },
+        "quantity": { "type": "number", "description": "Current quantity in stock" },
+        "imageUrl": { "type": "string", "description": "Cloudinary image URL" },
+        "ownerId": { "type": "string", "description": "UID of the user who owns this item" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "quantity", "ownerId", "createdAt", "updatedAt"]
+    },
+    "User": {
+      "title": "User Profile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["displayName", "email", "createdAt"]
+    },
+    "Project": {
+      "title": "Project Entry",
+      "description": "An entry in a project imported from Excel",
+      "type": "object",
+      "properties": {
+        "projectName": { "type": "string", "description": "Tên Dự Án (Nhập tay)" },
+        "projectCode": { "type": "string", "description": "Mã Dự Án (Nhập tay)" },
+        "cluster": { "type": "string", "description": "Cụm (Từ Excel)" },
+        "moduleCode": { "type": "string", "description": "Module (Từ Excel)" },
+        "quantity": { "type": "number", "description": "Số Lượng (Từ Excel)" },
+        "ownerId": { "type": "string", "description": "UID of the user who owns this project" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["projectName", "projectCode", "cluster", "moduleCode", "quantity", "ownerId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "projects": {
+      "schema": "Project",
+      "description": "Collection of project entries imported from Excel"
+    },
+    "items": {
+      "schema": "Item",
+      "description": "Collection of inventory items"
+    },
+    "users": {
+      "schema": "User",
+      "description": "Collection of user profiles"
+    },
+    "roles": {
+      "schema": "object",
+      "description": "Collection mapping user UIDs to roles (admin, mod)"
+    }
+  }
+}

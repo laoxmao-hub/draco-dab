@@ -1,0 +1,6 @@
+{
+  "name": "StockMaster Mobile",
+  "description": "A simple mobile-first inventory and goods management application with Google Auth and Cloudinary image hosting.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

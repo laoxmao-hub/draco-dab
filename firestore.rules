@@ -1,0 +1,130 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection test document
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // Phase 3: Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function hasAdminRole() {
+      return isSignedIn() && (
+        request.auth.token.email == 'nguyenkimqza@gmail.com' ||
+        request.auth.token.email == 'lqn.lklk@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'viewer') == 'admin')
+      );
+    }
+
+    function hasModRole() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'viewer') == 'mod'
+      );
+    }
+
+    function isPrivileged() {
+      return hasAdminRole() || hasModRole();
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128;
+    }
+
+    // Phase 4: Validation Helpers
+    
+    function isValidItem(data) {
+      return data.keys().hasAll(['name', 'quantity', 'ownerId', 'createdAt', 'updatedAt'])
+        && data.keys().size() <= 12
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 500
+        && (data.sku == null || (data.sku is string && data.sku.size() <= 200))
+        && (data.category == null || (data.category is string && data.category.size() <= 200))
+        && (data.price == null || data.price is number)
+        && data.quantity is number && data.quantity >= 0
+        && (data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() <= 1000))
+        && isOwner(data.ownerId)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['displayName', 'email', 'createdAt'])
+        && data.keys().size() <= 8
+        && data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 500
+        && data.email is string && data.email.size() > 0 && data.email.size() <= 500
+        && (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 1000))
+        && data.createdAt is timestamp;
+    }
+
+    function isValidProject(data) {
+      return data.keys().hasAll(['projectName', 'projectCode', 'cluster', 'moduleCode', 'quantity', 'ownerId', 'createdAt'])
+        && data.keys().size() <= 10
+        && data.projectName is string && data.projectName.size() > 0 && data.projectName.size() <= 500
+        && data.projectCode is string && data.projectCode.size() > 0 && data.projectCode.size() <= 200
+        && data.cluster is string && data.cluster.size() <= 500
+        && data.moduleCode is string && data.moduleCode.size() > 0 && data.moduleCode.size() <= 200
+        && data.quantity is number
+        && isOwner(data.ownerId)
+        && data.createdAt is timestamp;
+    }
+
+    // Collection: items
+    match /items/{itemId} {
+      allow read: if isSignedIn();
+      allow create: if isPrivileged();
+      allow update: if isPrivileged();
+      allow delete: if isPrivileged();
+    }
+
+    // Collection: projects
+    match /projects/{projectId} {
+      allow read: if isSignedIn();
+      allow create: if isPrivileged();
+      allow update: if isPrivileged(); 
+      allow delete: if isPrivileged();
+    }
+
+    // Collection: activities
+    match /activities/{activityId} {
+      allow read: if isPrivileged();
+      allow create: if isPrivileged();
+    }
+
+    // Collection: users
+    match /users/{userId} {
+      allow get: if isSignedIn() && (isOwner(userId) || isPrivileged());
+      allow list: if isPrivileged();
+      
+      allow create: if isOwner(userId)
+        && isValidUser(incoming());
+
+      allow update: if (isOwner(userId) || hasAdminRole())
+        && isValidUser(incoming())
+        && (hasAdminRole() || incoming().createdAt == existing().createdAt)
+        && (
+          hasAdminRole() || incoming().diff(existing()).affectedKeys().hasAny(['displayName', 'photoURL', 'email'])
+        );
+    }
+  }
+}
